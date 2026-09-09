@@ -1,1 +1,1 @@
-# magic-auto-battle
+halo from qwen coder
