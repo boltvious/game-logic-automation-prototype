@@ -1,0 +1,1 @@
+I will never believe a claim before I can prove it myself, proof is bigger than a claim, and I don't like pretending
