@@ -1,0 +1,10 @@
+{
+  "appId": "com.manabattle.app",
+  "appName": "Mana Battle",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "android": {
+    "path": "../android",
+    "fullscreen": true
+  }
+}

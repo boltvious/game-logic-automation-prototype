@@ -1,0 +1,169 @@
+import * as Tooltip from "@Components/Tooltip/Tooltip";
+import * as GameConstants from "@game/Constants";
+
+import * as i18n from "@i18n/i18n";
+import * as AudioManager from "@Systems/AudioManager";
+import { env, makeContainer as container, centeredRect } from "@Env";
+
+const MAX_WINS = 10;
+const RECT_WIDTH = 30;
+const RECT_HEIGHT = 20;
+const GAP = 5;
+const COLOR_GRAY = 0x808080;
+const COLOR_YELLOW = 0xffff00;
+const COLOR_BRONZE = 0xcd7f32;
+const COLOR_SILVER = 0xc0c0c0;
+const COLOR_GOLD = 0xffd700;
+const CIRCLE_RADIUS = 10;
+
+let winRects: Phaser.GameObjects.Graphics[] = [];
+let currentWins = 0;
+let mainContainer: Phaser.GameObjects.Container | null = null;
+
+export const WINS_DISPLAY_X = 240;
+export const WINS_DISPLAY_Y = 35;
+
+export function create() {
+	const initialWins = env.state.session.wins;
+	currentWins = initialWins;
+
+	const rects = createRects();
+	const indicators = createBonusIndicators();
+	updateRectColors(currentWins);
+
+	mainContainer = container([...rects, ...indicators]);
+	mainContainer.setPosition(WINS_DISPLAY_X, WINS_DISPLAY_Y);
+
+	const containerWidth = MAX_WINS * RECT_WIDTH + (MAX_WINS - 1) * GAP;
+	mainContainer
+		.setInteractive(
+			new Phaser.Geom.Rectangle(0, 0, containerWidth, RECT_HEIGHT),
+			Phaser.Geom.Rectangle.Contains
+		)
+		.on("pointerover", () => {
+			Tooltip.renderTooltip(
+				WINS_DISPLAY_X + 100,
+				WINS_DISPLAY_Y + 200,
+				i18n.t("winsDisplay.title"),
+				i18n.t("winsDisplay.description")
+			);
+		})
+		.on("pointerout", () => {
+			Tooltip.hideTooltip();
+		});
+
+	return mainContainer;
+}
+
+function createRects(): Phaser.GameObjects.Graphics[] {
+	winRects = [];
+
+	for (let i = 0; i < MAX_WINS; i++) {
+		const xOffset = i * (RECT_WIDTH + GAP);
+		const rect = centeredRect(env.scene, [xOffset, 0], [RECT_WIDTH, RECT_HEIGHT], COLOR_GRAY);
+
+		winRects.push(rect);
+	}
+
+	return winRects;
+}
+
+function createBonusIndicators(): Phaser.GameObjects.Graphics[] {
+	const indicators: Phaser.GameObjects.Graphics[] = [];
+	const bonuses = [
+		{ index: GameConstants.BRONZE_VICTORY_THRESHOLD - 1, color: COLOR_BRONZE },
+		{ index: GameConstants.SILVER_VICTORY_THRESHOLD - 1, color: COLOR_SILVER },
+		{ index: GameConstants.GOLD_VICTORY_THRESHOLD - 1, color: COLOR_GOLD },
+	];
+
+	for (const bonus of bonuses) {
+		const xOffset = bonus.index * (RECT_WIDTH + GAP) + RECT_WIDTH / 2;
+		const yOffset = RECT_HEIGHT + 15;
+
+		const circle = env.scene.add.graphics({ x: xOffset, y: yOffset });
+		circle.fillStyle(bonus.color, 1);
+		circle.fillCircle(0, 0, CIRCLE_RADIUS);
+		indicators.push(circle);
+	}
+
+	return indicators;
+}
+
+export const updateWinsDisplay = (newTotalWins: number): void => {
+	if (newTotalWins > currentWins) {
+		for (let i = currentWins; i < newTotalWins; i++) {
+			playWinEffect(i);
+		}
+	}
+	currentWins = newTotalWins;
+	updateRectColors(currentWins);
+};
+
+function updateRectColors(wins: number) {
+	for (let i = 0; i < winRects.length; i++) {
+		const rect = winRects[i];
+		rect.clear();
+
+		const color = i < wins ? COLOR_YELLOW : COLOR_GRAY;
+
+		rect.fillStyle(color, 0.7);
+		rect.fillRect(0, 0, RECT_WIDTH, RECT_HEIGHT);
+	}
+}
+
+function playWinEffect(index: number) {
+	if (!mainContainer) {
+		throw new Error("mainContainer is null");
+	}
+
+	if (index >= winRects.length) {
+		return;
+	}
+
+	AudioManager.playSoundEffect("sfx_ui_select");
+
+	const rect = winRects[index];
+
+	const x = rect.x + RECT_WIDTH / 2;
+	const y = rect.y + RECT_HEIGHT / 2;
+
+	const rects: Phaser.GameObjects.Rectangle[] = [];
+	for (let i = 0; i < 8; i++) {
+		const angle = Math.random() * Math.PI * 2;
+		const speed = Phaser.Math.FloatBetween(50, 100);
+		const travelDistance = (speed * 300) / 1000;
+		const size = Phaser.Math.FloatBetween(6, 12);
+
+		const burstRect = env.scene.add.rectangle(x, y, size, size, COLOR_YELLOW, 1);
+		burstRect.setBlendMode(Phaser.BlendModes.ADD);
+		rects.push(burstRect);
+
+		env.scene.tweens.add({
+			targets: burstRect,
+			x: x + Math.cos(angle) * travelDistance,
+			y: y + Math.sin(angle) * travelDistance,
+			alpha: 0,
+			scaleX: 0,
+			scaleY: 0,
+			duration: 300,
+			ease: "Cubic.easeOut",
+			onComplete: () => {
+				burstRect.destroy();
+			},
+		});
+	}
+
+	mainContainer.add(rects);
+
+	env.scene.time.delayedCall(600, () => {
+		rects.forEach((r) => {
+			if (r.active) {
+				r.destroy();
+			}
+		});
+	});
+}
+
+export async function winsChangeAnimation(_winsDelta: number) {
+	return Promise.resolve();
+}

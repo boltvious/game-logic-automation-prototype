@@ -1,0 +1,135 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "useDefineForClassFields": true,
+        "module": "ESNext",
+        "outDir": "./dist/",
+        "rootDir": "../",
+        "paths": {
+            "@game/*": [
+                "../core/src/*"
+            ],
+            "@mana/core/*": [
+                "../core/src/*"
+            ],
+            "@mana/framework": [
+                "../framework/src/index.ts"
+            ],
+            "@mana/framework/*": [
+                "../framework/src/*"
+            ],
+            "@Models/*": [
+                "./src/Models/*"
+            ],
+            "@Screens/*": [
+                "./src/Screens/*"
+            ],
+            "@Systems/*": [
+                "./src/Systems/*"
+            ],
+            "@Utils/*": [
+                "./src/Utils/*"
+            ],
+            "@Constants": [
+                "./src/Constants"
+            ],
+            "@Env": [
+                "./src/Env"
+            ],
+            "@Components/*": [
+                "./src/Components/*"
+            ],
+            "@Shaders/*": [
+                "./src/Shaders/*"
+            ],
+            "@i18n/*": [
+                "./src/i18n/*"
+            ],
+            "@lib/*": [
+                "./src/lib/*"
+            ],
+            "@Multiplayer/*": [
+                "./src/Multiplayer/*"
+            ],
+            "@Data/*": [
+                "./src/Data/*"
+            ],
+            "@TriggerSystem/*": [
+                "../core/src/TriggerSystem/*"
+            ],
+            "TriggerSystem/*": [
+                "../core/src/TriggerSystem/*"
+            ],
+            "@config": [
+                "./src/config.ts"
+            ],
+            "@main": [
+                "./src/main.ts"
+            ],
+            "@FX": [
+                "./src/FX/index.ts"
+            ],
+            "@Engine/*": [
+                "./src/Engine/*"
+            ],
+            "@assets": [
+                "./src/assets.ts"
+            ],
+            "@utils": [
+                "./src/utils.ts"
+            ],
+            "@test-utils/*": [
+                "./src/test-utils/*"
+            ]
+        },
+        "types": [
+            "jest"
+        ],
+        "lib": [
+            "ES2020",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "skipLibCheck": true,
+        /* Bundler mode */
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        /* Linting */
+        "strict": true,
+        "strictPropertyInitialization": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strictBindCallApply": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true
+    },
+    "include": [
+        "src",
+        "server",
+        "../core/src/Models.ts",
+        "../core/src/Combat/CombatLogger.ts",
+        "../core/src/CombatTypes.ts",
+        "../core/src/Combat/CombatStatsTracker.ts",
+        "../core/src/TriggerSystem",
+        "../core/src/Entities",
+        "../core/src/Combat/PoisonDamageSystem.ts",
+        "../core/src/Combat/RegenSystem.ts",
+        "../core/src/Combat/TimeoutDamageSystem.ts",
+        "../core/src/Constants.ts",
+        "../core/src/Combat/StatusEffectSystem.ts",
+        "../core/src/Combat/CombatRunner.ts",
+        "../core/src/CombatConstants.ts",
+        "../core/src/Combat/CombatSimulation.test.ts",
+        "../core/src/Combat/CombatSimulation.ts",
+        "../core/src/BaseCollection.ts",
+        "../core/src/Geometry.ts",
+        "../core/src/BoardLogic.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ],
+}

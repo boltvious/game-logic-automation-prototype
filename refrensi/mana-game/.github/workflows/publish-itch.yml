@@ -1,0 +1,41 @@
+name: Publish to itch.io
+
+on:
+  workflow_dispatch: # Manual trigger from GitHub Actions UI
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: phaser/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./phaser
+        run: npm ci
+
+      - name: Build Web Version
+        working-directory: ./phaser
+        env:
+          # Release builds must bake these — without them the shipped build
+          # points multiplayer at 127.0.0.1:8787. See release-audit.md #1.
+          # Override via repo secrets; defaults match the live production values.
+          MANA_SERVER_URL: ${{ secrets.MANA_SERVER_URL || 'https://api.manabattle.com' }}
+          MANA_ITCH_CLIENT_ID: ${{ secrets.MANA_ITCH_CLIENT_ID }}
+        run: npm run build
+
+      - name: Deploy to itch.io
+        uses: robpc/itchio-upload-action@v1
+        with:
+          path: phaser/dist
+          project: ${{ secrets.ITCHIO_PROJECT }}
+          channel: html5
+          api-key: ${{ secrets.ITCHIO_API_KEY }}

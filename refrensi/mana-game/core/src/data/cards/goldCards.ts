@@ -1,0 +1,220 @@
+// Gold (rank 3) recruitable units — powerful build-around units (some locked).
+// Split from data/BaseCollection.ts (tier grouping) — balance conventions in
+// docs/unit-balance.md, tier design in docs/card-design-philosophy.md.
+
+import * as Models from "../../Models";
+import {
+  regen,
+  damage,
+  heal,
+  shield,
+  poison,
+  haste,
+  slow,
+  silence,
+  increasePower,
+  decreasePower,
+  multiplyPower,
+  reaction,
+  column,
+  row,
+  randomEnemy,
+  self,
+  weakestAlly,
+  strongestAlly,
+  strongestEnemy,
+  allAlliesOfType,
+} from "../effectBuilders";
+
+export const GOLD_CARDS: Models.CardDefinition[] = [
+  {
+    id: "toxicologist",
+    description:
+      "Poison build-around — every allied poison tick feeds permanent self power; also slows.",
+    tags: ["type_engine", "grow_over_time", "disabler"],
+    pic: "neutral_gnasher",
+    power: 80,
+    rank: 3,
+    cooldown: 7800,
+    effects: [poison, slow(2000, randomEnemy(2))],
+    reactions: [reaction("poison", "allies", increasePower(6, self))],
+  },
+  {
+    id: "expedition_leader",
+    description:
+      "Shield + column power engine that feeds off allied healing — durability/value hybrid.",
+    tags: ["team_buff", "type_engine"],
+    pic: "neutral_goldenhammer",
+    power: 70,
+    rank: 3,
+    cooldown: 8400,
+    effects: [shield, increasePower(20, column)],
+    reactions: [reaction("heal", "allies", increasePower(4, column))],
+  },
+  {
+    id: "vanguard",
+    description:
+      "Haste engine — hastes its column and permanently self-ramps off every allied haste.",
+    tags: ["haster", "grow_over_time"],
+    pic: "neutral_gauntletmaster",
+    power: 80,
+    rank: 3,
+    cooldown: 5160,
+    effects: [damage, haste(2000, column)],
+    reactions: [reaction("haste", "allies", increasePower(2, self, true))],
+  },
+  {
+    id: "veteran_paladin",
+    description:
+      "Row-haste paladin that permanently self-ramps off column shields — tempo + durability.",
+    tags: ["haster", "grow_over_time"],
+    pic: "neutral_goldenjusticar",
+    power: 70,
+    rank: 3,
+    cooldown: 6240,
+    effects: [regen, haste(2000, row)],
+    reactions: [
+      reaction("shield", "column_allies", increasePower(2, self, true)),
+    ],
+  },
+  {
+    id: "webert_the_old",
+    description:
+      "Heal engine that permanently ramps its row off column regen — slow, powerful scaling.",
+    tags: ["team_buff", "grow_over_time"],
+    pic: "neutral_goldenmantella",
+    power: 48,
+    rank: 3,
+    cooldown: 8880,
+    effects: [heal, increasePower(20, row)],
+    reactions: [
+      reaction("regen", "column_allies", increasePower(5, row, true)),
+    ],
+  },
+  {
+    // Balancer
+    id: "destiny_balancer",
+    description:
+      "Board-balancing gamble — drains the strongest ally to multiply the weakest ally.",
+    tags: ["risk_reward", "power_redistribution"],
+    pic: "f3_allomancer",
+    life: 1500,
+    power: 10,
+    rank: 3,
+    locked: true,
+    cooldown: 8600,
+    effects: [
+      shield,
+      decreasePower(100, strongestAlly),
+      multiplyPower(1.5, weakestAlly),
+    ],
+    reactions: [],
+  },
+  //damage -> damage
+  {
+    id: "warbringer",
+    description:
+      "Damage archetype engine — opens with haste and permanently empowers every damage ally.",
+    tags: ["type_engine", "haster", "team_buff"],
+    pic: "boss_solfist",
+    power: 60,
+    rank: 3,
+    locked: true,
+    cooldown: 6200,
+    effects: [damage, increasePower(10, allAlliesOfType("damage"))],
+    reactions: [
+      reaction(
+        "on_battle_start",
+        "allies",
+        haste(2000, allAlliesOfType("damage")),
+      ),
+    ],
+  },
+  //shield -> shield
+  {
+    id: "aegis_archon",
+    description:
+      "Shield archetype engine — feeds every shield ally power off enemy damage (cross-force).",
+    tags: ["type_engine", "team_buff", "cross_force"],
+    pic: "f3_tier2general",
+    power: 35,
+    rank: 3,
+    locked: true,
+    cooldown: 6200,
+    effects: [shield],
+    reactions: [
+      reaction(
+        "damage",
+        "enemies",
+        increasePower(5, allAlliesOfType("shield")),
+        "enemy",
+      ),
+    ],
+  },
+  //poison -> poison
+  {
+    id: "plague_sovereign",
+    description:
+      "Poison archetype engine — mass-slow opener that permanently empowers every poison ally.",
+    tags: ["type_engine", "disabler", "team_buff"],
+    pic: "f4_abomination",
+    power: 40,
+    rank: 3,
+    locked: true,
+    cooldown: 5200,
+    effects: [poison],
+    reactions: [
+      reaction("on_battle_start", "allies", slow(2000, randomEnemy(4))),
+      reaction(
+        "re_slow",
+        "allies",
+        increasePower(5, allAlliesOfType("poison")),
+      ),
+    ],
+  },
+  //gambler2
+  {
+    id: "fate_shifter",
+    description:
+      "Twisted Mirror — multiplies the strongest ally and the strongest enemy each cast (can backfire).",
+    tags: ["risk_reward", "type_engine"],
+    pic: "boss_sandpanther",
+    power: 10,
+    rank: 3,
+    locked: true,
+    cooldown: 9200,
+    effects: [
+      damage,
+      multiplyPower(1.5, strongestAlly),
+      multiplyPower(1.5, strongestEnemy),
+    ],
+    reactions: [],
+  },
+  // C1 (docs/wacky-content-plan.md): the cast-engine archetype — its damage
+  // `repeat`s once per cast (2 hits). Gold-only per the repeat balance rule.
+  {
+    id: "grand_conductor",
+    description: "Cast engine — its damage strikes twice per cast (repeat).",
+    tags: ["type_engine"],
+    pic: "neutral_spelljammer",
+    power: 65,
+    rank: 3,
+    cooldown: 8000,
+    effects: [{ id: "damage", repeat: 2 }],
+    reactions: [],
+  },
+  // D1 (docs/wacky-content-plan.md): counterplay blade — damage + silence the
+  // strongest enemy. Gold-only per the silence balance rule.
+  {
+    id: "ice_guardian",
+    description:
+      "Counterplay blade — damages and silences the strongest enemy.",
+    tags: ["disabler", "type_engine"],
+    pic: "f6_ynuyttracker",
+    power: 70,
+    rank: 3,
+    cooldown: 6000,
+    effects: [damage, silence(1500, strongestEnemy)],
+    reactions: [],
+  },
+];

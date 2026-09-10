@@ -1,0 +1,31 @@
+export const NUM_TAVERN_SLOTS = 3;
+const PANEL_PADDING = 40;
+export const TAVERN_PADDING = 20;
+export const TAVERN_CHARA_SPACING = 300;
+
+export const TAVERN_BG_WIDTH = 900;
+export const TAVERN_BG_HEIGHT = 840;
+
+export const SHOP_PANEL_WIDTH = TAVERN_BG_WIDTH + PANEL_PADDING * 2;
+
+export const TAVERN_BASE_X = 0;
+export const TAVERN_BASE_Y = 100;
+
+export const TAVERN_TITLE_X = TAVERN_BASE_X + TAVERN_PADDING;
+export const TAVERN_TITLE_Y = TAVERN_BASE_Y + TAVERN_PADDING;
+
+export const ITEM_BASE_X = 1100;
+export const ITEM_BASE_Y = 250;
+
+export const ITEM_DESC_BASE_X = 1210;
+export const ITEM_DESC_BASE_Y = 120;
+
+export const PANEL_BG_COLOR = 0x2c3e50;
+export const PANEL_BG_OPACITY = 0.95;
+export const SUB_PANEL_CORNER_RADIUS = 15;
+
+export const SHOP_ITEM_APPEAR_SCALE_DURATION = 400;
+export const SHOP_ITEM_APPEAR_WIGGLE_ANGLE = 10;
+export const SHOP_ITEM_APPEAR_WIGGLE_DURATION_1 = 100;
+export const SHOP_ITEM_APPEAR_WIGGLE_DURATION_2 = 100;
+export const SHOP_ITEM_APPEAR_WIGGLE_RETURN_DURATION = 50;

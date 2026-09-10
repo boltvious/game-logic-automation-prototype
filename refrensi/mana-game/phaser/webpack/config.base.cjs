@@ -1,0 +1,127 @@
+const path = require("path");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
+
+const sharedResolve = {
+	extensions: [".ts", ".js", ".json"],
+	// Keep webpack path resolution aligned with TypeScript path aliases.
+	plugins: [new TsconfigPathsPlugin({ configFile: path.resolve(__dirname, "../tsconfig.json") })],
+	alias: {
+		"@game": path.resolve(__dirname, "../../core/src"),
+		"@mana/core": path.resolve(__dirname, "../../core/src"),
+		"@mana/framework": path.resolve(__dirname, "../../framework/src"),
+		"@Models": path.resolve(__dirname, "../src/Models"),
+		"@Screens": path.resolve(__dirname, "../src/Screens"),
+		"@Systems": path.resolve(__dirname, "../src/Systems"),
+		"@Env": path.resolve(__dirname, "../src/Env"),
+		"@Constants": path.resolve(__dirname, "../src/Constants"),
+		"@Utils": path.resolve(__dirname, "../src/Utils"),
+		"@Components": path.resolve(__dirname, "../src/Components"),
+		"@Shaders": path.resolve(__dirname, "../src/Shaders"),
+		"@i18n": path.resolve(__dirname, "../src/i18n")
+	}
+};
+
+const sharedExternals = {
+	"steamworks.js": "commonjs steamworks.js"
+};
+
+const sharedCopyPatterns = [
+	{ from: "public/assets", to: "assets" },
+	{ from: "public/favicon.png", to: "favicon.png" },
+	{ from: "public/style.css", to: "style.css" }
+];
+
+const createSharedModuleRules = ({ transpileOnly = false } = {}) => [
+	{
+		test: /\.js$/,
+		exclude: /node_modules/,
+		use: {
+			loader: "babel-loader"
+		}
+	},
+	{
+		test: /\.tsx?$/,
+		exclude: /node_modules/,
+		loader: "ts-loader",
+		options: {
+			configFile: path.resolve(__dirname, "../tsconfig.json"),
+			...(transpileOnly
+				? {
+					transpileOnly: true,
+					experimentalWatchApi: true
+				}
+				: {})
+		}
+	},
+	{
+		test: [/\.vert$/, /\.frag$/],
+		use: "raw-loader"
+	},
+	{
+		test: /\.(gif|png|jpe?g|svg|xml|glsl)$/i,
+		use: "file-loader"
+	}
+];
+
+const createSharedDefineValues = ({ webglDebug, experimental, logLevel, isProd = false } = {}) => {
+	const values = {
+		"typeof CANVAS_RENDERER": JSON.stringify(true),
+		"typeof WEBGL_RENDERER": JSON.stringify(true),
+		"typeof WEBGL_DEBUG": JSON.stringify(webglDebug),
+		"typeof EXPERIMENTAL": JSON.stringify(experimental),
+		"typeof PLUGIN_3D": JSON.stringify(false),
+		"typeof PLUGIN_CAMERA3D": JSON.stringify(false),
+		"typeof PLUGIN_FBINSTANT": JSON.stringify(false),
+		"typeof FEATURE_SOUND": JSON.stringify(true),
+		"IS_DEMO_BUILD": JSON.stringify(process.env.IS_DEMO === "true"),
+		...(logLevel ? { "process.env.LOG_LEVEL": JSON.stringify(logLevel) } : {}),
+		"process.env.APP_VERSION": JSON.stringify(process.env.npm_package_version || "dev"),
+		// Game-server base URL for the client auth modules and the RemoteServer
+		// HTTP adapter. Empty string falls back at runtime.
+		"process.env.MANA_SERVER_URL": JSON.stringify(process.env.MANA_SERVER_URL || ""),
+		// itch.io OAuth client id for the web build (src/lib/itchAuth.ts,
+		// docs/itchio-auth.md). Empty string disables browser multiplayer with a
+		// clear "itch auth not configured" error.
+		"process.env.MANA_ITCH_CLIENT_ID": JSON.stringify(process.env.MANA_ITCH_CLIENT_ID || ""),
+		// Google OAuth client id for the web + Android builds
+		// (src/lib/googleAuth.ts, docs/android-multiplayer.md). Empty string
+		// hides/disables Google sign-in; the server rejects tokens whose
+		// audience does not match its own MANA_GOOGLE_CLIENT_ID anyway.
+		"process.env.MANA_GOOGLE_CLIENT_ID": JSON.stringify(process.env.MANA_GOOGLE_CLIENT_ID || ""),
+		"__DEV__": JSON.stringify(process.env.NODE_ENV !== "production")
+	};
+
+	// Release-build guardrails: MANA_SERVER_URL / MANA_ITCH_CLIENT_ID are baked
+	// in at build time (docs/building-and-running.md §Multiplayer auth
+	// configuration). Unset, a released client silently falls back to
+	// http://127.0.0.1:8787 (the player's own machine) or disables browser
+	// login — warn loudly so a production build can't be shipped with broken
+	// multiplayer by accident.
+	if (isProd) {
+		if (!process.env.MANA_SERVER_URL) {
+			console.warn(
+				"[webpack] WARNING: MANA_SERVER_URL is unset — this build's multiplayer will target http://127.0.0.1:8787 (the player's own machine). Set MANA_SERVER_URL=https://us-central1-mana-battle-f3b15.cloudfunctions.net/api for release builds."
+			);
+		}
+		if (!process.env.MANA_ITCH_CLIENT_ID) {
+			console.warn(
+				"[webpack] WARNING: MANA_ITCH_CLIENT_ID is unset — browser (itch.io) multiplayer login is disabled in this build. Set MANA_ITCH_CLIENT_ID for the web release."
+			);
+		}
+		if (!process.env.MANA_GOOGLE_CLIENT_ID) {
+			console.warn(
+				"[webpack] WARNING: MANA_GOOGLE_CLIENT_ID is unset — Google sign-in (web + Android) is disabled in this build. Set MANA_GOOGLE_CLIENT_ID for release builds."
+			);
+		}
+	}
+
+	return values;
+};
+
+module.exports = {
+	sharedResolve,
+	sharedExternals,
+	sharedCopyPatterns,
+	createSharedModuleRules,
+	createSharedDefineValues
+};

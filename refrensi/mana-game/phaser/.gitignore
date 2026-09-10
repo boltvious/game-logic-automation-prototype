@@ -1,0 +1,37 @@
+# System and IDE files
+Thumbs.db
+.DS_Store
+.idea
+*.suo
+*.sublime-project
+*.sublime-workspace
+*.vscode
+
+# Vendors
+node_modules/
+
+# Build
+dist/
+
+# Log files
+*.log
+debug_log.txt
+
+/npm-debug.log
+
+# Electron build artifacts
+dist-electron/
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.blockmap
+*.yml
+builder-debug.yml
+builder-effective-config.yaml
+
+# Code quality tools
+.eslintcache
+coverage/
+reports/mutation/
+.stryker-tmp/

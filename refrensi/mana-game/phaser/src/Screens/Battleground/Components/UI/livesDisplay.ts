@@ -1,0 +1,124 @@
+import * as Constants from "@Constants";
+import * as GameConstants from "@game/Constants";
+import * as Tooltip from "@Components/Tooltip/Tooltip";
+import * as i18n from "@i18n/i18n";
+import { env, makeContainer as container } from "@Env";
+
+const MAX_LIVES = GameConstants.STARTING_LIVES;
+const GREEN_HEART = "💚";
+const GRAY_HEART = "🖤";
+
+let heartElements: Phaser.GameObjects.Text[] = [];
+let currentLives = MAX_LIVES;
+let containerElement: Phaser.GameObjects.Container | null = null;
+
+export const getContainerBounds = (): Phaser.Geom.Rectangle | null => {
+	return containerElement ? containerElement.getBounds() : null;
+};
+
+export const getCurrentLives = (): number => currentLives;
+
+export const updateLivesDisplay = (newTotalLives: number): void => {
+	if (newTotalLives < currentLives) {
+		// Only animate when lives decrease
+		const livesLost = currentLives - newTotalLives;
+
+		// Animate hearts from right to left
+		for (let i = 0; i < livesLost; i++) {
+			const heartIndex = currentLives - 1 - i;
+			if (heartIndex >= 0 && heartIndex < heartElements.length) {
+				const heart = heartElements[heartIndex];
+
+				// Change the heart to black with a tween
+				env.scene.tweens.add({
+					targets: heart,
+					tint: 0x000000,
+					duration: 500,
+					ease: "Power2",
+					onStart: () => {
+						heart.setText(GRAY_HEART);
+					},
+				});
+			}
+		}
+	} else if (newTotalLives > currentLives) {
+		// Lives gained (e.g. Rest Inn): the hearts between currentLives and
+		// newTotalLives are the ones currently grayed out — restore them to
+		// green with a small pop so the gain is visible.
+		for (let i = currentLives; i < newTotalLives && i < heartElements.length; i++) {
+			const heart = heartElements[i];
+			heart.clearTint();
+			heart.setText(GREEN_HEART);
+			env.scene.tweens.add({
+				targets: heart,
+				scale: { from: 0.7, to: 1 },
+				duration: 250,
+				ease: "Back.easeOut",
+			});
+		}
+	}
+
+	currentLives = newTotalLives;
+};
+
+export const LIVES_DISPLAY_X = 60;
+export const LIVES_DISPLAY_Y = 50;
+
+export function create() {
+	const initialLives = MAX_LIVES - env.state.session.losses;
+	currentLives = initialLives;
+
+	const hearts = createHearts();
+
+	const containerEl = container([...hearts]);
+	containerEl.setPosition(LIVES_DISPLAY_X, LIVES_DISPLAY_Y);
+
+	containerElement = containerEl;
+
+	const bounds = containerElement.getBounds();
+	containerElement
+		.setInteractive(
+			new Phaser.Geom.Rectangle(0, -bounds.height / 2, bounds.width, bounds.height),
+			Phaser.Geom.Rectangle.Contains
+		)
+		.on("pointerover", () => {
+			Tooltip.renderTooltip(
+				LIVES_DISPLAY_X + 100,
+				LIVES_DISPLAY_Y + 200,
+				i18n.t("livesDisplay.title"),
+				i18n.t("livesDisplay.description")
+			);
+		})
+		.on("pointerout", () => {
+			Tooltip.hideTooltip();
+		});
+
+	return containerEl;
+}
+
+function createHearts(): Phaser.GameObjects.Text[] {
+	heartElements = [];
+
+	for (let i = 0; i < MAX_LIVES; i++) {
+		const isAlive = i < currentLives;
+		const heartIcon = isAlive ? GREEN_HEART : GRAY_HEART;
+
+		const heart = env.scene.add.text(0, 0, heartIcon, {
+			...Constants.titleTextConfig,
+			fontSize: "36px",
+			color: "#ffffff",
+		});
+
+		if (!isAlive) {
+			heart.setTint(0x000000);
+		}
+
+		const xOffset = i * 40;
+		heart.setPosition(xOffset, 0);
+		heart.setOrigin(0.5);
+
+		heartElements.push(heart);
+	}
+
+	return heartElements;
+}
